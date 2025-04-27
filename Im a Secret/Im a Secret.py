@@ -4,8 +4,15 @@ from PIL import Image, ImageTk
 import os
 
 # === Paths to resources ===
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ASSETS_DIR = os.path.join(BASE_DIR, "assets")
+# Сначала пытаемся найти папку "assets" в текущей директории
+CURRENT_DIR = os.getcwd()  # где запущен скрипт
+ASSETS_DIR = os.path.join(CURRENT_DIR, "assets")
+
+# Если такой папки нет, пробуем рядом с файлом скрипта (__file__)
+if not os.path.exists(ASSETS_DIR):
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    ASSETS_DIR = os.path.join(BASE_DIR, "assets")
+
 BACKGROUND_PATH = os.path.join(ASSETS_DIR, "Im_a_secret4.png")
 ICON_PATH = os.path.join(ASSETS_DIR, "smile.ico")
 
