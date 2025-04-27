@@ -2,13 +2,10 @@ import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
-import threading
-import base64
-import hashlib
-from Crypto.Cipher import AES
-from Crypto.Random import get_random_bytes
 
-# === Search for files on the drive ===
+import threading
+
+# === Поиск файлов на диске ===
 def find_file(filename, drives=["C:\\", "D:\\"]):
     for drive in drives:
         for root, dirs, files in os.walk(drive):
@@ -16,63 +13,75 @@ def find_file(filename, drives=["C:\\", "D:\\"]):
                 return os.path.join(root, filename)
     return None
 
-# === Search for background and icon ===
+# === Ищем иконку и фон ===
 BACKGROUND_FILENAME = "Im_a_secret4.png"
 ICON_FILENAME = "smile.ico"
 
 BACKGROUND_PATH = find_file(BACKGROUND_FILENAME)
 ICON_PATH = find_file(ICON_FILENAME)
 
-# === AES-256 encryption key ===
-AES_KEY = hashlib.sha256(b"SECRETKEY").digest()  # 32 bytes for AES-256
+# === Vigenère cipher key ===
+VIGENERE_KEY = "SECRETKEY"
 
-# === AES-256 encryption and decryption functions ===
-def pad(s):
-    padding_len = AES.block_size - len(s) % AES.block_size
-    return s + bytes([padding_len] * padding_len)
+# === Vigenère encryption ===
+def encrypt_vigenere(plaintext, key=VIGENERE_KEY):
+    ciphertext = ""
+    key = key.upper()
+    key_length = len(key)
+    for i, char in enumerate(plaintext):
+        if char.isalpha():
+            offset = 65 if char.isupper() else 97
+            key_char = key[i % key_length]
+            key_shift = ord(key_char) - 65
+            encrypted_char = chr((ord(char) - offset + key_shift) % 26 + offset)
+            ciphertext += encrypted_char
+        else:
+            ciphertext += char
+    return ciphertext
 
-def unpad(s):
-    return s[:-s[-1]]
+# === Vigenère decryption ===
+def decrypt_vigenere(ciphertext, key=VIGENERE_KEY):
+    plaintext = ""
+    key = key.upper()
+    key_length = len(key)
+    for i, char in enumerate(ciphertext):
+        if char.isalpha():
+            offset = 65 if char.isupper() else 97
+            key_char = key[i % key_length]
+            key_shift = ord(key_char) - 65
+            decrypted_char = chr((ord(char) - offset - key_shift) % 26 + offset)
+            plaintext += decrypted_char
+        else:
+            plaintext += char
+    return plaintext
 
-def encrypt_aes(plaintext):
-    iv = get_random_bytes(16)  # Initialization vector for CBC mode
-    cipher = AES.new(AES_KEY, AES.MODE_CBC, iv)
-    ciphertext = cipher.encrypt(pad(plaintext.encode('utf-8')))
-    return base64.b64encode(iv + ciphertext).decode('utf-8')
-
-def decrypt_aes(ciphertext_b64):
-    data = base64.b64decode(ciphertext_b64)
-    iv = data[:16]
-    ciphertext = data[16:]
-    cipher = AES.new(AES_KEY, AES.MODE_CBC, iv)
-    plaintext = unpad(cipher.decrypt(ciphertext))
-    return plaintext.decode('utf-8')
-
-# === Button functions ===
+# === Handle encryption button click ===
 def on_encrypt():
     text = text_entry.get("1.0", tk.END).strip()
     if not text:
         messagebox.showerror("Error", "Enter text to encrypt!")
         return
     try:
-        encrypted = encrypt_aes(text)
+        encrypted = encrypt_vigenere(text)
         result_text.delete("1.0", tk.END)
         result_text.insert(tk.END, encrypted)
     except Exception as e:
         messagebox.showerror("Error", f"Encryption failed: {e}")
 
+# === Handle decryption button click ===
 def on_decrypt():
     text = text_entry.get("1.0", tk.END).strip()
     if not text:
         messagebox.showerror("Error", "Enter text to decrypt!")
         return
     try:
-        decrypted = decrypt_aes(text)
+        decrypted = decrypt_vigenere(text)
         result_text.delete("1.0", tk.END)
         result_text.insert(tk.END, decrypted)
     except Exception as e:
         messagebox.showerror("Error", f"Decryption failed: {e}")
 
+# === Copy result to clipboard ===
 def copy_to_clipboard():
     text = result_text.get("1.0", tk.END).strip()
     if text:
@@ -81,6 +90,7 @@ def copy_to_clipboard():
         root.update()
         messagebox.showinfo("Copied", "Text copied to clipboard!")
 
+# === Paste text from clipboard ===
 def paste_from_clipboard():
     try:
         clipboard_content = root.clipboard_get()
@@ -89,7 +99,7 @@ def paste_from_clipboard():
     except tk.TclError:
         messagebox.showerror("Error", "Clipboard is empty!")
 
-# === GUI Setup ===
+# === GUI setup ===
 root = tk.Tk()
 root.title("I'm a Secret")
 root.geometry("650x800")
