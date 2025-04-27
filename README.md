@@ -6,7 +6,7 @@ Welcome! My name is **V.**, and this is my first serious project: **I'm a Secret
 
 ## 🔐 What is "I'm a Secret"?
 
-**I'm a Secret** encrypts messages using the **AES-256**, one of the most complex and time-tested methods of text encryption.  
+**I'm a Secret** encrypts messages using the **Vigenre code**, one of the most complex and time-tested methods of text encryption.  
 Whether you're chatting online or just want an extra layer of privacy — this tool is for **everyone on the planet** 🌍.
 
 ---
